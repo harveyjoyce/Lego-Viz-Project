@@ -44,13 +44,13 @@ I created tables based on existing data: COLORS, INVENTORIES, INVENTORY_PARTS, I
 
 I populated tables with data from the corresponding tables in the STAGING schema.
 
-
+```
   INSERTED INTO TIL_PORTFOLIO_PROJECTS.STAGING.COLORS (
     SELECT *
     FROM TIL_PORTFOLIO_PROJECTS.STAGING.LEGO_COLORS
   );
   -- Repeated for other tables
-
+```
 ## Set Primary and Foreign Keys:
 
 I defined primary and foreign keys for each table.
