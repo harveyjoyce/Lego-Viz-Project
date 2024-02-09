@@ -27,37 +27,40 @@ The LEGO Visualization Project deepened my understanding of LEGO sets and their 
 
 I created a schema within the TIL_PORTFOLIO_PROJECTS database.
 
-
-  CREATED SCHEMA TIL_PORTFOLIO_PROJECTS.STAGING;
-
+```
+ CREATE schema til_portfolio_projects.harvey_schema;
+```
 ## Created Tables:
 
 I created tables based on existing data: COLORS, INVENTORIES, INVENTORY_PARTS, INVENTORY_SETS, PARTS, PART_CATEGORIES, SETS, THEMES.
 
-
-  CREATED TABLE TIL_PORTFOLIO_PROJECTS.STAGING.COLORS (
-    -- Defined columns and data types
-  );
+```
+ CREATE TABLE til_portfolio_projects.harvey_schema.LEGO_INVENTORIES (
+	ID NUMBER(38,0),
+	VERSION NUMBER(38,0),
+	SET_NUM VARCHAR(255)
+);
   -- Repeated for other tables
-
+```
 ## Inserted Data:
 
 I populated tables with data from the corresponding tables in the STAGING schema.
 
 ```
-  INSERTED INTO TIL_PORTFOLIO_PROJECTS.STAGING.COLORS (
-    SELECT *
-    FROM TIL_PORTFOLIO_PROJECTS.STAGING.LEGO_COLORS
-  );
+  INSERT INTO til_portfolio_projects.harvey_schema.LEGO_INVENTORIES (
+SELECT *
+FROM  TIL_PORTFOLIO_PROJECTS.STAGING.LEGO_INVENTORIES
+);
   -- Repeated for other tables
 ```
 ## Set Primary and Foreign Keys:
 
 I defined primary and foreign keys for each table.
-
-  ALTERED TABLE table_name ADDED PRIMARY KEY (column_name);
-  ALTERED TABLE table_name ADDED FOREIGN KEY (column_name) REFERENCES another_table(another_tables_primary_key_column);
-
+```
+ALTER TABLE LEGO_INVENTORIES ADD PRIMARY KEY (ID);
+ALTER TABLE LEGO_INVENTORIES ADD FOREIGN KEY (SET_NUM) REFERENCES LEGO_SETS(SET_NUM);
+  -- Repeated for other tables
+```
 ## Created ER Diagram:
 
 I downloaded DBeaver and created an ER diagram to visualize table relationships.
@@ -71,10 +74,68 @@ I downloaded DBeaver and created an ER diagram to visualize table relationships.
 # Deliverables:
 
 - 1️⃣ Identified Unique Parts: I identified parts that appeared in only one LEGO set.
+ ```
+select 
+    lp.name
+    ,lp.part_num
+    , count(distinct li.set_num) as num_of_sets
+from lego_parts lp
+inner join lego_inventory_parts lip 
+on lp.part_num=lip.part_num
+inner join lego_inventories li 
+on lip.inventory_id=li.id 
+inner join lego_sets ls 
+on li.set_num=ls.set_num
+group by lp.part_num, lp.name
+having num_of_sets=1
+
+```
 
 - 2️⃣ Analyzed Sets: I calculated the number of unique parts and total parts for each LEGO set. I calculated the ratio of unique parts to total parts.
+```
+with cte_up as 
+(select 
+    lp.name
+    ,lp.part_num
+    , count(distinct li.set_num) as num_of_sets
+from lego_parts lp
+inner join lego_inventory_parts lip 
+on lp.part_num=lip.part_num
+inner join lego_inventories li 
+on lip.inventory_id=li.id 
+inner join lego_sets ls 
+on li.set_num=ls.set_num
+group by lp.part_num, lp.name
+having num_of_sets=1)
+
+select
+    ls.name as set_name
+    ,ls.year
+    ,lt.name as theme
+    ,count(up.part_num) as unique_parts
+    ,count(lp.name) as parts
+    ,count(up.part_num)/count(lp.name) as ratio
+from lego_parts lp
+inner join lego_inventory_parts lip 
+on lp.part_num=lip.part_num
+inner join lego_inventories li 
+on lip.inventory_id=li.id 
+inner join lego_sets ls 
+on li.set_num=ls.set_num
+inner join lego_part_categories lpc 
+on lp.part_cat_id=lpc.id
+left join lego_themes lt 
+on ls.theme_id=lt.id
+left join cte_up up 
+on up.part_num=lp.part_num
+group by ls.name, ls.year, lt.name
+order by ratio desc
+```
 
 - 3️⃣ Created a View: I created a view containing set name, year of release, theme, number of unique parts, total number of parts, and uniqueness ratio.
+```
+create view uniqueness_by_sets as...
+```
 
 - 4️⃣ Downloaded Data: I extracted data from the view and saved it locally as a CSV file.
 
